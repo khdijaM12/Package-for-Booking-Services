@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         bootstrap="../vendor/autoload.php"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         testSuiteLoaderClass="PHPUnit\Runner\TestSuiteLoader"
+         testSuiteLoaderFile="vendor/autoload.php"
+         >
+    <testsuites>
+        <testsuite name="Slot Booking Package Test Suite">
+            <directory suffix="Test.php">./</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <ini name="error_reporting" value="-1" />
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_DEBUG" value="true"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+    </php>
+</phpunit>
