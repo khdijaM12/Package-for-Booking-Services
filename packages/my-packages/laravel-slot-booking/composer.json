@@ -1,0 +1,13 @@
+{
+    "name": "khadija/laravel-slot-booking",
+    "description": "Laravel Slot Booking Package",
+    "type": "laravel-package",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Khadija\\LaravelSlotBooking\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {}
+}
