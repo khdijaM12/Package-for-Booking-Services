@@ -5971,9 +5971,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/my-packages/laravel-slot-booking",
-                "reference": "b29f87268d8902698efd7f7db9afaa62d8f8fd4b"
+                "reference": "1b7edb0a11d6c85f51afc93054cee18d27e40c4a"
             },
             "require-dev": {
+                "orchestra/testbench": "^9.0",
                 "phpunit/phpunit": "^11.0"
             },
             "type": "laravel-package",
