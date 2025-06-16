@@ -27,6 +27,8 @@ class SlotBookingServiceProvider extends ServiceProvider
             __DIR__ . '/../config/slot-booking.php' => config_path('slot-booking.php'),
         ], 'slot-booking-config');
 
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+
         // لو أضفتي Migrations أو Views لاحقًا، ممكن تفعليهم هنا:
         // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         // $this->loadViewsFrom(__DIR__.'/../resources/views', 'slot-booking');
