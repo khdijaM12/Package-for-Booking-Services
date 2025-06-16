@@ -3,6 +3,7 @@
 namespace Khadija\LaravelSlotBooking;
 
 use Illuminate\Support\ServiceProvider;
+use Khadija\LaravelSlotBooking\Services\SlotBookingService; 
 
 class SlotBookingServiceProvider extends ServiceProvider
 {
@@ -15,6 +16,11 @@ class SlotBookingServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__ . '/../config/slot-booking.php', 'slot-booking'
         );
+
+        // تسجيل الخدمة في Service Container
+        $this->app->singleton('slot-booking', function ($app) {
+            return new SlotBookingService();
+        });
     }
 
     /**
