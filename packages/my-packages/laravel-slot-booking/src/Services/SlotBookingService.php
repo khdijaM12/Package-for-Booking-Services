@@ -5,7 +5,7 @@ namespace Khadija\LaravelSlotBooking\Services;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
-use Khadija\LaravelSlotBooking\Models\Slot; // سنحتاجها لاحقاً للحفظ في DB
+use Khadija\LaravelSlotBooking\Models\Slot;
 use Illuminate\Database\QueryException;
 use Khadija\LaravelSlotBooking\Models\Booking;
 use Khadija\LaravelSlotBooking\Exceptions\SlotNotAvailableException;
@@ -16,43 +16,54 @@ use Illuminate\Support\Facades\DB;
 class SlotBookingService
 {
     /**
+     * @var int Default slot duration in minutes.
+     */
+    protected $defaultSlotDuration;
+
+    /**
+     * @var int Default buffer time in minutes.
+     */
+    protected $defaultBufferTime;
+
+    /**
+     * @var string|null Timezone for slot calculations.
+     */
+    protected $timezone;
+
+    public function __construct()
+    {
+        $this->defaultSlotDuration = Config::get('slot-booking.default_slot_duration', 30);
+        $this->defaultBufferTime = Config::get('slot-booking.default_buffer_time', 15);
+        $this->timezone = Config::get('slot-booking.timezone', config('app.timezone'));
+    }
+
+    /**
      * Generates a collection of available slots for a given service and time range.
      *
      * @param int $serviceId The ID of the service provider/entity.
      * @param Carbon $startTime The start time for slot generation.
      * @param Carbon $endTime The end time for slot generation.
-     * @return Collection
+     * @return Collection<int, array> A collection of slot data (not saved to DB yet).
      */
     public function generateAvailableSlots(int $serviceId, Carbon $startTime, Carbon $endTime): Collection
     {
-        // احصل على المنطقة الزمنية المحددة في إعدادات الباكج أو استخدم الافتراضية
-        $timezone = Config::get('slot-booking.timezone');
+        // إذا ما تم تحديده في الكونفيج، نستخدم المنطقة الزمنية الافتراضية من Laravel
+        $timezoneToUse = $this->timezone ?: config('app.timezone');
 
-        // إذا ما تم تحديده، نستخدم المنطقة الزمنية الافتراضية من Laravel
-        if (empty($timezone)) {
-            $timezone = config('app.timezone');
-        }
-
-        // نعين المنطقة الزمنية إذا كانت غير فارغة
-        if (!empty($timezone)) {
-            $startTime = $startTime->setTimezone($timezone);
-            $endTime = $endTime->setTimezone($timezone);
-        }
+        // نعين المنطقة الزمنية
+        $startTime = $startTime->copy()->setTimezone($timezoneToUse);
+        $endTime = $endTime->copy()->setTimezone($timezoneToUse);
 
         // تحقق من أن وقت البدء قبل وقت الانتهاء
         if ($startTime->greaterThanOrEqualTo($endTime)) {
             return collect(); // أرجع مجموعة فارغة إذا كانت المدة غير صالحة
         }
 
-        $slots = new Collection();
-        $slotDuration = Config::get('slot-booking.default_slot_duration');
-        $bufferTime = Config::get('slot-booking.default_buffer_time');
-
-        // ابدأ من وقت البدء المحدد
-        $currentSlotStart = $startTime->copy();
+            $slots = new Collection();
+            $currentSlotStart = $startTime->copy();
 
         while ($currentSlotStart->lessThan($endTime)) {
-            $currentSlotEnd = $currentSlotStart->copy()->addMinutes($slotDuration);
+            $currentSlotEnd = $currentSlotStart->copy()->addMinutes($this->defaultSlotDuration);
 
             // تأكد من أن نهاية الفترة لا تتجاوز وقت النهاية المحدد
             if ($currentSlotEnd->greaterThan($endTime)) {
@@ -61,23 +72,54 @@ class SlotBookingService
 
             $slots->push([
                 'service_id' => $serviceId,
-                'start_time' => $currentSlotStart->copy(), // استخدم نسخة لتجنب التغيير بالمرجع
+                'start_time' => $currentSlotStart->copy(),
                 'end_time' => $currentSlotEnd->copy(),
-                'is_available' => true, // افتراضياً، الفترات المولدة متاحة
+                'is_available' => true,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
             ]);
 
             // انتقل إلى بداية الفترة التالية، مع الأخذ في الاعتبار وقت البافر
-            $currentSlotStart = $currentSlotEnd->copy()->addMinutes($bufferTime);
+            $currentSlotStart = $currentSlotEnd->copy()->addMinutes($this->defaultBufferTime);
         }
 
         return $slots;
     }
 
-        public function bookSlot(int $slotId, Model $bookable): Booking
+    /**
+     * Saves a collection of generated slots to the database.
+     *
+     * @param Collection<int, array> $slotsData The collection of slot data to save.
+     * @return bool True if slots were saved successfully, false otherwise.
+     */
+    public function saveSlots(Collection $slotsData): bool
+    {
+        // يمكننا استخدام insert لعملية حفظ جماعية لتقليل عدد الاستعلامات
+        // تأكدي أن كل عناصر الـ collection هي array وليست objects
+        $slotsToInsert = $slotsData->map(function ($slot) {
+            // تحويل Carbon instances إلى سلاسل DateTime للقاعدة البيانات
+            $slot['start_time'] = $slot['start_time']->toDateTimeString();
+            $slot['end_time'] = $slot['end_time']->toDateTimeString();
+            return $slot;
+        })->toArray();
+
+        if (empty($slotsToInsert)) {
+            return false;
+        }
+
+        try {
+            DB::table(Config::get('slot-booking.tables.slots', 'slots'))->insert($slotsToInsert);
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Failed to save slots: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function bookSlot(int $slotId, Model $bookable): Booking
     {
         return DB::transaction(function () use ($slotId, $bookable) {
-            // 1. استرجاع الـ Slot وتأمينه لمنع التعارضات (Locking)
-            // forUpdate() يضيف قفل صف (row lock) على السجل في قاعدة البيانات
+             // 1. استرجاع الـ Slot وتأمينه لمنع التعارضات (Locking)
             $slot = Slot::where('id', $slotId)->lockForUpdate()->first();
 
             // 1. تحقق من وجود الـ Slot
@@ -103,26 +145,18 @@ class SlotBookingService
                     'bookable_type' => get_class($bookable),
                 ]);
 
-                // 5. تحديث حالة الـ Slot لجعله غير متاح
-                // هذا ضروري لمنع حجوزات مستقبلية لنفس Slot من الظهور كمتاحة.
-                // ولكن الحماية الأساسية للحجز المزدوج هي unique index على slot_id في جدول bookings
+                 // 5. تحديث حالة الـ Slot لجعله غير متاح
                 $slot->update(['is_available' => false]);
-
-                // هنا يمكننا إطلاق حدث (Event) لإرسال تأكيد الحجز مثلاً (سنضيفها لاحقاً)
-                // event(new BookingConfirmed($booking));
 
                 return $booking;
 
-            } catch (QueryException $e) {
-                // في حال حدوث QueryException بسبب unique constraint على slot_id
-                // هذا يعني أن Slot قد تم حجزه في نفس اللحظة من قبل عملية أخرى (Race Condition)
+                } catch (QueryException $e) {
                 if (str_contains($e->getMessage(), 'unique constraint')) {
                     throw new SlotAlreadyBookedException();
                 }
-                throw $e; // أعد رمي أي استثناء آخر
+                throw $e;
             }
         });
     }
 
-    // توابع أخرى ستضاف لاحقاً هنا، مثل bookSlot، cancelSlot، إلخ.
 }
