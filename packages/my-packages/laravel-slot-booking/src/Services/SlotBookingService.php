@@ -6,6 +6,12 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Khadija\LaravelSlotBooking\Models\Slot; // سنحتاجها لاحقاً للحفظ في DB
+use Illuminate\Database\QueryException;
+use Khadija\LaravelSlotBooking\Models\Booking;
+use Khadija\LaravelSlotBooking\Exceptions\SlotNotAvailableException;
+use Khadija\LaravelSlotBooking\Exceptions\SlotAlreadyBookedException;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class SlotBookingService
 {
@@ -65,6 +71,57 @@ class SlotBookingService
         }
 
         return $slots;
+    }
+
+        public function bookSlot(int $slotId, Model $bookable): Booking
+    {
+        return DB::transaction(function () use ($slotId, $bookable) {
+            // 1. استرجاع الـ Slot وتأمينه لمنع التعارضات (Locking)
+            // forUpdate() يضيف قفل صف (row lock) على السجل في قاعدة البيانات
+            $slot = Slot::where('id', $slotId)->lockForUpdate()->first();
+
+            // 1. تحقق من وجود الـ Slot
+            if (!$slot) {
+                throw new SlotNotAvailableException();
+            }
+
+            // 2. تحقق إذا كان محجوز بالفعل
+            if (Booking::where('slot_id', $slot->id)->exists()) {
+                throw new SlotAlreadyBookedException();
+            }
+
+            // 3. تحقق إذا كان غير متاح (لكن مش محجوز)
+            if (!$slot->is_available) {
+                throw new SlotNotAvailableException();
+            }
+
+            try {
+                // 4. إنشاء الحجز
+                $booking = Booking::create([
+                    'slot_id' => $slot->id,
+                    'bookable_id' => $bookable->id,
+                    'bookable_type' => get_class($bookable),
+                ]);
+
+                // 5. تحديث حالة الـ Slot لجعله غير متاح
+                // هذا ضروري لمنع حجوزات مستقبلية لنفس Slot من الظهور كمتاحة.
+                // ولكن الحماية الأساسية للحجز المزدوج هي unique index على slot_id في جدول bookings
+                $slot->update(['is_available' => false]);
+
+                // هنا يمكننا إطلاق حدث (Event) لإرسال تأكيد الحجز مثلاً (سنضيفها لاحقاً)
+                // event(new BookingConfirmed($booking));
+
+                return $booking;
+
+            } catch (QueryException $e) {
+                // في حال حدوث QueryException بسبب unique constraint على slot_id
+                // هذا يعني أن Slot قد تم حجزه في نفس اللحظة من قبل عملية أخرى (Race Condition)
+                if (str_contains($e->getMessage(), 'unique constraint')) {
+                    throw new SlotAlreadyBookedException();
+                }
+                throw $e; // أعد رمي أي استثناء آخر
+            }
+        });
     }
 
     // توابع أخرى ستضاف لاحقاً هنا، مثل bookSlot، cancelSlot، إلخ.

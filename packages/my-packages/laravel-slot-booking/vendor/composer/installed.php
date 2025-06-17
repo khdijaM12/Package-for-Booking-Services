@@ -3,7 +3,7 @@
         'name' => 'khadija/laravel-slot-booking',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'c4bbdb8ba797a3d19068e1a46829318a2e49bdf7',
+        'reference' => '6b2b922d78e1acdfa565114122ba57ce682b9e55',
         'type' => 'laravel-package',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -110,9 +110,9 @@
             'dev_requirement' => true,
         ),
         'filp/whoops' => array(
-            'pretty_version' => '2.18.2',
-            'version' => '2.18.2.0',
-            'reference' => '89dabca1490bc77dbcab41c2b20968c7e44bf7c3',
+            'pretty_version' => '2.18.3',
+            'version' => '2.18.3.0',
+            'reference' => '59a123a3d459c5a23055802237cb317f609867e5',
             'type' => 'library',
             'install_path' => __DIR__ . '/../filp/whoops',
             'aliases' => array(),
@@ -392,7 +392,7 @@
         'khadija/laravel-slot-booking' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'c4bbdb8ba797a3d19068e1a46829318a2e49bdf7',
+            'reference' => '6b2b922d78e1acdfa565114122ba57ce682b9e55',
             'type' => 'laravel-package',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -433,6 +433,15 @@
             'aliases' => array(
                 0 => '0.3.x-dev',
             ),
+            'dev_requirement' => true,
+        ),
+        'laravel/sanctum' => array(
+            'pretty_version' => '4.x-dev',
+            'version' => '4.9999999.9999999.9999999-dev',
+            'reference' => 'a37797ec3a57389036c17072ad5213e268167df6',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../laravel/sanctum',
+            'aliases' => array(),
             'dev_requirement' => true,
         ),
         'laravel/serializable-closure' => array(
@@ -750,7 +759,7 @@
         'phpunit/phpunit' => array(
             'pretty_version' => '11.5.x-dev',
             'version' => '11.5.9999999.9999999-dev',
-            'reference' => '86ebcd8a3dbcd1857d88505109b2a2b376501cde',
+            'reference' => '91f3e44276139a3fe6b1937f5a455dac1e8a380a',
             'type' => 'library',
             'install_path' => __DIR__ . '/../phpunit/phpunit',
             'aliases' => array(),
@@ -1099,7 +1108,7 @@
         'symfony/console' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '13cff4946131b09c4e44c69e572fa77fbe6e9bd7',
+            'reference' => '969df4bcdb211680a7463b0c22484c8fa63dc3b0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/console',
             'aliases' => array(),

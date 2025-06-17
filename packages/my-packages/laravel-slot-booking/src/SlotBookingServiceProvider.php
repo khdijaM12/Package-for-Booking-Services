@@ -4,6 +4,7 @@ namespace Khadija\LaravelSlotBooking;
 
 use Illuminate\Support\ServiceProvider;
 use Khadija\LaravelSlotBooking\Services\SlotBookingService; 
+use Illuminate\Support\Facades\Route;
 
 class SlotBookingServiceProvider extends ServiceProvider
 {
@@ -35,6 +36,7 @@ class SlotBookingServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
+        $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
         // لو أضفتي Migrations أو Views لاحقًا، ممكن تفعليهم هنا:
         // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         // $this->loadViewsFrom(__DIR__.'/../resources/views', 'slot-booking');

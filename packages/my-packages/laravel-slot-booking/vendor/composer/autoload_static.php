@@ -136,6 +136,7 @@ class ComposerStaticInit8377463b18f174d7fd852127a91afced
             'League\\CommonMark\\' => 18,
             'Laravel\\Tinker\\' => 15,
             'Laravel\\SerializableClosure\\' => 28,
+            'Laravel\\Sanctum\\' => 16,
             'Laravel\\Prompts\\' => 16,
             'Laravel\\Pail\\' => 13,
         ),
@@ -433,6 +434,10 @@ class ComposerStaticInit8377463b18f174d7fd852127a91afced
         'Laravel\\SerializableClosure\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/serializable-closure/src',
+        ),
+        'Laravel\\Sanctum\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/laravel/sanctum/src',
         ),
         'Laravel\\Prompts\\' => 
         array (

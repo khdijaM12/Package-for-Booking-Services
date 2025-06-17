@@ -680,17 +680,17 @@
         },
         {
             "name": "filp/whoops",
-            "version": "2.18.2",
-            "version_normalized": "2.18.2.0",
+            "version": "2.18.3",
+            "version_normalized": "2.18.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/filp/whoops.git",
-                "reference": "89dabca1490bc77dbcab41c2b20968c7e44bf7c3"
+                "reference": "59a123a3d459c5a23055802237cb317f609867e5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/filp/whoops/zipball/89dabca1490bc77dbcab41c2b20968c7e44bf7c3",
-                "reference": "89dabca1490bc77dbcab41c2b20968c7e44bf7c3",
+                "url": "https://api.github.com/repos/filp/whoops/zipball/59a123a3d459c5a23055802237cb317f609867e5",
+                "reference": "59a123a3d459c5a23055802237cb317f609867e5",
                 "shasum": ""
             },
             "require": {
@@ -706,7 +706,7 @@
                 "symfony/var-dumper": "Pretty print complex values better with var-dumper available",
                 "whoops/soap": "Formats errors as SOAP responses"
             },
-            "time": "2025-06-11T20:42:19+00:00",
+            "time": "2025-06-16T00:02:10+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -742,7 +742,7 @@
             ],
             "support": {
                 "issues": "https://github.com/filp/whoops/issues",
-                "source": "https://github.com/filp/whoops/tree/2.18.2"
+                "source": "https://github.com/filp/whoops/tree/2.18.3"
             },
             "funding": [
                 {
@@ -1738,6 +1738,74 @@
                 "source": "https://github.com/laravel/prompts/tree/main"
             },
             "install-path": "../laravel/prompts"
+        },
+        {
+            "name": "laravel/sanctum",
+            "version": "4.x-dev",
+            "version_normalized": "4.9999999.9999999.9999999-dev",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/sanctum.git",
+                "reference": "a37797ec3a57389036c17072ad5213e268167df6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/sanctum/zipball/a37797ec3a57389036c17072ad5213e268167df6",
+                "reference": "a37797ec3a57389036c17072ad5213e268167df6",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "illuminate/console": "^11.0|^12.0",
+                "illuminate/contracts": "^11.0|^12.0",
+                "illuminate/database": "^11.0|^12.0",
+                "illuminate/support": "^11.0|^12.0",
+                "php": "^8.2",
+                "symfony/console": "^7.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.6",
+                "orchestra/testbench": "^9.0|^10.0",
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^11.3"
+            },
+            "time": "2025-04-29T20:41:20+00:00",
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Laravel\\Sanctum\\SanctumServiceProvider"
+                    ]
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Sanctum\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "Laravel Sanctum provides a featherweight authentication system for SPAs and simple APIs.",
+            "keywords": [
+                "auth",
+                "laravel",
+                "sanctum"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel/sanctum/issues",
+                "source": "https://github.com/laravel/sanctum"
+            },
+            "install-path": "../laravel/sanctum"
         },
         {
             "name": "laravel/serializable-closure",
@@ -4228,12 +4296,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "86ebcd8a3dbcd1857d88505109b2a2b376501cde"
+                "reference": "91f3e44276139a3fe6b1937f5a455dac1e8a380a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/86ebcd8a3dbcd1857d88505109b2a2b376501cde",
-                "reference": "86ebcd8a3dbcd1857d88505109b2a2b376501cde",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/91f3e44276139a3fe6b1937f5a455dac1e8a380a",
+                "reference": "91f3e44276139a3fe6b1937f5a455dac1e8a380a",
                 "shasum": ""
             },
             "require": {
@@ -4267,7 +4335,7 @@
             "suggest": {
                 "ext-soap": "To be able to generate mocks based on WSDL files"
             },
-            "time": "2025-06-13T05:47:49+00:00",
+            "time": "2025-06-16T03:07:40+00:00",
             "bin": [
                 "phpunit"
             ],
@@ -4307,7 +4375,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.23"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5"
             },
             "funding": [
                 {
@@ -6216,12 +6284,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "13cff4946131b09c4e44c69e572fa77fbe6e9bd7"
+                "reference": "969df4bcdb211680a7463b0c22484c8fa63dc3b0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/13cff4946131b09c4e44c69e572fa77fbe6e9bd7",
-                "reference": "13cff4946131b09c4e44c69e572fa77fbe6e9bd7",
+                "url": "https://api.github.com/repos/symfony/console/zipball/969df4bcdb211680a7463b0c22484c8fa63dc3b0",
+                "reference": "969df4bcdb211680a7463b0c22484c8fa63dc3b0",
                 "shasum": ""
             },
             "require": {
@@ -6254,7 +6322,7 @@
                 "symfony/stopwatch": "^6.4|^7.0|^8.0",
                 "symfony/var-dumper": "^6.4|^7.0|^8.0"
             },
-            "time": "2025-06-13T12:15:18+00:00",
+            "time": "2025-06-16T06:35:25+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -8838,6 +8906,7 @@
         "laravel/framework",
         "laravel/pail",
         "laravel/prompts",
+        "laravel/sanctum",
         "laravel/serializable-closure",
         "laravel/tinker",
         "league/commonmark",
