@@ -19,6 +19,7 @@ return [
     'tables' => [
         'slots' => 'slots',
         'bookings' => 'bookings',
+        'schedules' => 'schedules',
     ],
 
     /*

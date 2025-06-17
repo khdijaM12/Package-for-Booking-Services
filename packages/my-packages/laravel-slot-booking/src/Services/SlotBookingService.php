@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Config;
 use Khadija\LaravelSlotBooking\Models\Slot;
 use Illuminate\Database\QueryException;
 use Khadija\LaravelSlotBooking\Models\Booking;
+use Khadija\LaravelSlotBooking\Models\Schedule; // أضف هذا السطر
 use Khadija\LaravelSlotBooking\Exceptions\SlotNotAvailableException;
 use Khadija\LaravelSlotBooking\Exceptions\SlotAlreadyBookedException;
 use Illuminate\Database\Eloquent\Model;
@@ -15,19 +16,8 @@ use Illuminate\Support\Facades\DB;
 
 class SlotBookingService
 {
-    /**
-     * @var int Default slot duration in minutes.
-     */
     protected $defaultSlotDuration;
-
-    /**
-     * @var int Default buffer time in minutes.
-     */
     protected $defaultBufferTime;
-
-    /**
-     * @var string|null Timezone for slot calculations.
-     */
     protected $timezone;
 
     public function __construct()
@@ -59,8 +49,8 @@ class SlotBookingService
             return collect(); // أرجع مجموعة فارغة إذا كانت المدة غير صالحة
         }
 
-            $slots = new Collection();
-            $currentSlotStart = $startTime->copy();
+        $slots = new Collection();
+        $currentSlotStart = $startTime->copy();
 
         while ($currentSlotStart->lessThan($endTime)) {
             $currentSlotEnd = $currentSlotStart->copy()->addMinutes($this->defaultSlotDuration);
@@ -87,6 +77,98 @@ class SlotBookingService
     }
 
     /**
+     * Generates and saves slots based on recurring schedules for a given date range.
+     *
+     * @param int $serviceId The ID of the service.
+     * @param Carbon $startDate The start date for generating slots.
+     * @param Carbon $endDate The end date for generating slots.
+     * @return Collection<int, Slot> Collection of saved Slot models.
+     */
+    public function generateAndSaveSlotsFromSchedule(int $serviceId, Carbon $startDate, Carbon $endDate): Collection
+    {
+        $savedSlots = collect();
+        $currentDate = $startDate->copy();
+        $timezoneToUse = $this->timezone ?: config('app.timezone');
+
+        // جلب جميع الجداول المتكررة للخدمة المطلوبة
+        $schedules = Schedule::where('service_id', $serviceId)
+                             ->where(function ($query) use ($currentDate) {
+                                 $query->whereNull('start_date')
+                                       ->orWhere('start_date', '<=', $currentDate->toDateString());
+                             })
+                             ->where(function ($query) use ($currentDate) {
+                                 $query->whereNull('end_date')
+                                       ->orWhere('end_date', '>=', $currentDate->toDateString());
+                             })
+                             ->get();
+
+        if ($schedules->isEmpty()) {
+            return $savedSlots; // لا توجد جداول لهذه الخدمة
+        }
+
+        while ($currentDate->lessThanOrEqualTo($endDate)) {
+            $dayName = $currentDate->format('l'); // مثل 'Monday'
+
+            // تحقق من الجداول المتكررة لهذا اليوم
+            foreach ($schedules as $schedule) {
+                $appliesToDay = false;
+                if ($schedule->day_of_week === 'Every_Day') {
+                    $appliesToDay = true;
+                } elseif ($schedule->day_of_week === 'Weekdays' && $currentDate->isWeekday()) {
+                    $appliesToDay = true;
+                } elseif ($schedule->day_of_week === 'Weekends' && $currentDate->isWeekend()) {
+                    $appliesToDay = true;
+                } elseif ($schedule->day_of_week === $dayName) {
+                    $appliesToDay = true;
+                }
+
+                if ($appliesToDay) {
+                    // تحديد أوقات البدء والانتهاء اليومية من الجدول
+                    $dailyStartTime = Carbon::parse($currentDate->toDateString() . ' ' . $schedule->start_time_daily, $timezoneToUse);
+                    $dailyEndTime = Carbon::parse($currentDate->toDateString() . ' ' . $schedule->end_time_daily, $timezoneToUse);
+
+                    // إذا كان هناك تجاوز للمدة أو البافر أو المنطقة الزمنية في الجدول
+                    $slotDuration = $schedule->slot_duration ?? $this->defaultSlotDuration;
+                    $bufferTime = $schedule->buffer_time ?? $this->defaultBufferTime;
+                    $scheduleTimezone = $schedule->timezone ?? $timezoneToUse;
+
+                    // توليد الفترات لهذا اليوم من الجدول
+                    $currentSlotStart = $dailyStartTime->copy()->setTimezone($scheduleTimezone);
+
+                    while ($currentSlotStart->lessThan($dailyEndTime)) {
+                        $currentSlotEnd = $currentSlotStart->copy()->addMinutes($slotDuration);
+
+                        if ($currentSlotEnd->greaterThan($dailyEndTime)) {
+                            break;
+                        }
+
+                        // تحقق مما إذا كان الـ slot موجودًا بالفعل في قاعدة البيانات لتجنب الازدواجية
+                        $existingSlot = Slot::where('service_id', $serviceId)
+                                            ->where('start_time', $currentSlotStart->toDateTimeString())
+                                            ->where('end_time', $currentSlotEnd->toDateTimeString())
+                                            ->first();
+
+                        if (!$existingSlot) {
+                            $slot = Slot::create([
+                                'service_id' => $serviceId,
+                                'start_time' => $currentSlotStart->copy(),
+                                'end_time' => $currentSlotEnd->copy(),
+                                'is_available' => true,
+                            ]);
+                            $savedSlots->push($slot);
+                        }
+
+                        $currentSlotStart = $currentSlotEnd->copy()->addMinutes($bufferTime);
+                    }
+                }
+            }
+            $currentDate->addDay(); // انتقل إلى اليوم التالي
+        }
+
+        return $savedSlots;
+    }
+
+    /**
      * Saves a collection of generated slots to the database.
      *
      * @param Collection<int, array> $slotsData The collection of slot data to save.
@@ -108,7 +190,8 @@ class SlotBookingService
         }
 
         try {
-            DB::table(Config::get('slot-booking.tables.slots', 'slots'))->insert($slotsToInsert);
+            // استخدام insertOrIgnore لتجنب الأخطاء إذا كانت الفترات موجودة بالفعل
+            DB::table(Config::get('slot-booking.tables.slots', 'slots'))->insertOrIgnore($slotsToInsert);
             return true;
         } catch (\Exception $e) {
             \Log::error('Failed to save slots: ' . $e->getMessage());
@@ -119,38 +202,32 @@ class SlotBookingService
     public function bookSlot(int $slotId, Model $bookable): Booking
     {
         return DB::transaction(function () use ($slotId, $bookable) {
-             // 1. استرجاع الـ Slot وتأمينه لمنع التعارضات (Locking)
             $slot = Slot::where('id', $slotId)->lockForUpdate()->first();
 
-            // 1. تحقق من وجود الـ Slot
             if (!$slot) {
                 throw new SlotNotAvailableException();
             }
 
-            // 2. تحقق إذا كان محجوز بالفعل
             if (Booking::where('slot_id', $slot->id)->exists()) {
                 throw new SlotAlreadyBookedException();
             }
 
-            // 3. تحقق إذا كان غير متاح (لكن مش محجوز)
             if (!$slot->is_available) {
                 throw new SlotNotAvailableException();
             }
 
             try {
-                // 4. إنشاء الحجز
                 $booking = Booking::create([
                     'slot_id' => $slot->id,
                     'bookable_id' => $bookable->id,
                     'bookable_type' => get_class($bookable),
                 ]);
 
-                 // 5. تحديث حالة الـ Slot لجعله غير متاح
                 $slot->update(['is_available' => false]);
 
                 return $booking;
 
-                } catch (QueryException $e) {
+            } catch (QueryException $e) {
                 if (str_contains($e->getMessage(), 'unique constraint')) {
                     throw new SlotAlreadyBookedException();
                 }
@@ -158,5 +235,4 @@ class SlotBookingService
             }
         });
     }
-
 }

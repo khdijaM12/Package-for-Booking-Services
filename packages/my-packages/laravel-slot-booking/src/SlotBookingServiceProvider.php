@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Khadija\LaravelSlotBooking\Services\SlotBookingService; 
 use Illuminate\Support\Facades\Route;
 use Khadija\LaravelSlotBooking\Console\Commands\GenerateSlotsCommand; 
+use Khadija\LaravelSlotBooking\Console\Commands\GenerateRecurringSlotsCommand; 
 
 class SlotBookingServiceProvider extends ServiceProvider
 {
@@ -28,6 +29,7 @@ class SlotBookingServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 GenerateSlotsCommand::class,
+                GenerateRecurringSlotsCommand::class,
             ]);
         }
     }
